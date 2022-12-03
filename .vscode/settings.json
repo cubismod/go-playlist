@@ -1,0 +1,8 @@
+{
+    "gopls": {
+        "ui.semanticTokens": true,
+    },
+    "[go]": {
+        "editor.formatOnSave": true
+    }
+}
