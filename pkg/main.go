@@ -1,4 +1,4 @@
-package playlist
+package main
 
 import (
 	"context"
@@ -6,23 +6,19 @@ import (
 	"time"
 
 	"github.com/apex/log"
+	"github.com/cubismod/go-playlist/pkg/playlist"
 	"github.com/go-co-op/gocron"
-
-	badger "github.com/dgraph-io/badger/v3"
+	"github.com/joho/godotenv"
 	"github.com/zmb3/spotify/v2"
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
-func setupDB() *badger.DB {
-	db, err := badger.Open(badger.DefaultOptions("./data"))
-	if err != nil {
-		log.WithError(err).Fatal("Unable to load database")
-	}
-	return db
-}
-
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.WithError(err)
+	}
 
 	// basic client setup
 	ctx := context.Background()
@@ -38,28 +34,25 @@ func main() {
 	}
 
 	httpClient := spotifyauth.New().Client(ctx, token)
-	client := spotify.New(httpClient)
+	client := spotify.New(httpClient, spotify.WithRetry(true))
 
 	log.Info("Spotify connected")
 
-	spotifyConfig := load()
-
-	db := setupDB()
-
-	cacheTask(spotifyConfig, db, client)
-
+	spotifyConfig := playlist.Load()
 	// now we setup the cron loop
 	scheduler := gocron.NewScheduler(time.Local)
 
-	scheduler.Every(2).Day().At("03:30").Do(cleanupTask, spotifyConfig, client)
-	scheduler.Every(6).Hours().Do(cacheTask, spotifyConfig, db, client)
-	scheduler.Cron("0 5 * * 1").Do(scanPlaylistTask, "DiscoverWeekly", spotifyConfig, db, client)
-	scheduler.Cron("0 5 * * 1").Do(scanPlaylistTask, "DiscoverWeekly", spotifyConfig, db, client)
-	scheduler.Cron("0 5 * * 5").Do(scanPlaylistTask, "ReleaseRadar", spotifyConfig, db, client)
-	scheduler.Cron("0 7 1/14 * *").Do(scanPlaylistTask, scanPlaylistTask, "OnRepeat", spotifyConfig, db, client)
-	scheduler.Cron("0 9 1/12 * *").Do(scanPlaylistTask, scanPlaylistTask, "RepeatRewind", spotifyConfig, db, client)
-	scheduler.Cron("0 11 1/10 * *").Do(scanPlaylistTask, scanPlaylistTask, "RepeatRewind", spotifyConfig, db, client)
+	for _, configPlaylist := range spotifyConfig.Playlists {
+		_, err := scheduler.Cron(configPlaylist.ScanCron).Do(playlist.ScanAndAdd, configPlaylist.ID, spotifyConfig, client)
+		if err != nil {
+			log.WithError(err)
+		}
+	}
 
+	_, err = scheduler.Cron(spotifyConfig.Aggregator.CleanupCron).Do(playlist.CleanupTask)
+	if err != nil {
+		log.WithError(err)
+	}
 	scheduler.StartBlocking()
 
 }

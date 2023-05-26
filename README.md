@@ -1,4 +1,8 @@
 # go-playlist
 Spotify playlist automation with go
 
-# Autom
+# Environment Variables Required
+```
+SPOTIFY_ID=<id>
+SPOTIFY_SECRET=<secret>
+```

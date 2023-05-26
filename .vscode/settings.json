@@ -4,5 +4,6 @@
     },
     "[go]": {
         "editor.formatOnSave": true
-    }
+    },
+    "ansible.python.interpreterPath": "/Users/ryan/Documents/git/cubemoji/scripts/gitlab/venv/bin/python"
 }
