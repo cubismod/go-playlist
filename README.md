@@ -5,4 +5,6 @@ Spotify playlist automation with go
 ```
 SPOTIFY_ID=<id>
 SPOTIFY_SECRET=<secret>
+HOSTNAME=http://localhost
+PORT=8080
 ```

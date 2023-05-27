@@ -2,6 +2,7 @@ FROM golang:1.20.4
 
 WORKDIR /app
 
+ENV TZ="America/New_York"
 LABEL maintainer="ryan@hexa.mozmail.com"
 
 COPY . .
