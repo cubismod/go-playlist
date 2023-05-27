@@ -5,10 +5,11 @@ package playlist
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/apex/log"
 	"github.com/google/uuid"
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
 
@@ -41,18 +42,32 @@ func generateUrl() string {
 func RunAuthServer() *spotify.Client {
 	// first start an HTTP server
 	http.HandleFunc("/callback", completeAuth)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Got request for:", r.URL.String())
-	})
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {})
 	go func() {
 		err := http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("PORT")), nil)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("Unable to start web server", err)
 		}
 	}()
 
 	url := auth.AuthURL(state)
-	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
+	msg := fmt.Sprintf("Please log in to Spotify by visiting the following page in your browser: %s", url)
+
+	req, _ := http.NewRequest("POST", os.Getenv("NTFY_URL"), strings.NewReader(msg))
+	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", os.Getenv("NTFY_PW")))
+	req.Header.Set("Actions", fmt.Sprintf("view, Open, %s", url))
+	resp, err := http.DefaultClient.Do(req)
+
+	if err != nil {
+		log.WithError(err).Error("Unable to post to Gotify server")
+	}
+
+	log.WithFields(log.Fields{
+		"code": resp.StatusCode,
+		"body": resp.Status,
+	}).Info("Gotify req")
+
+	log.Info(msg)
 
 	// wait for auth to complete
 	client := <-ch
@@ -60,7 +75,7 @@ func RunAuthServer() *spotify.Client {
 	// use the client to make calls that require authorization
 	user, err := client.CurrentUser(context.Background())
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("unable to login", err)
 	}
 	fmt.Println("You are logged in as:", user.ID)
 
@@ -71,7 +86,7 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 	tok, err := auth.Token(r.Context(), state, r)
 	if err != nil {
 		http.Error(w, "Couldn't get token", http.StatusForbidden)
-		log.Fatal(err)
+		log.Fatal(err.Error())
 	}
 	if st := r.FormValue("state"); st != state {
 		http.NotFound(w, r)
