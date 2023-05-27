@@ -78,6 +78,14 @@ func main() {
 					return nil
 				},
 			},
+			{
+				Name:  "clean",
+				Usage: "clean the aggregator playlist",
+				Action: func(cCtx *cli.Context) error {
+					playlist.CleanupTask(spotifyConfig.Aggregator.ID, spotifyConfig, client)
+					return nil
+				},
+			},
 		},
 	}
 

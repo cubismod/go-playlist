@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/apex/log"
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/zmb3/spotify/v2"
 )
 
@@ -56,18 +57,45 @@ func CleanupTask(playlistID string, config SpotifyConfig, client *spotify.Client
 	items := getItems(client, config, playlistID)
 	var deleteItems []spotify.ID
 
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 5; i++ {
 		randIndex := rand.Intn(len(items))
 		randomItem := items[randIndex]
-		deleteItems = append(deleteItems, randomItem.Track.Track.ID)
-		log.WithFields(log.Fields{
-			"name":   randomItem.Track.Track.Name,
-			"artist": randomItem.Track.Track.Artists,
-			"album":  randomItem.Track.Track.Album,
-		}).Info("Remove from playlist")
+		if randomItem.Track.Track != nil {
+			deleteItems = append(deleteItems, randomItem.Track.Track.ID)
+			log.WithFields(log.Fields{
+				"name":   randomItem.Track.Track.Name,
+				"artist": randomItem.Track.Track.Artists,
+				"album":  randomItem.Track.Track.Album.Name,
+			}).Info("Remove from playlist")
+		}
 	}
 
 	_, err := client.RemoveTracksFromPlaylist(ctx, spotify.ID(playlistID), deleteItems...)
+	if err != nil {
+		log.WithError(err)
+		return
+	}
+
+	duplicates := mapset.NewSet[spotify.ID]()
+
+	// find duplicates
+	for _, i1 := range items {
+		for _, i2 := range items {
+			if i1.Track.Track != nil && i2.Track.Track != nil &&
+				i1.Track.Track.SimpleTrack.ID != i2.Track.Track.ID &&
+				i1.Track.Track.Name == i2.Track.Track.Name {
+
+				duplicates.Add(i2.Track.Track.ID)
+				log.WithFields(log.Fields{
+					"name":   i1.Track.Track.Name,
+					"artist": i1.Track.Track.Artists,
+					"album":  i1.Track.Track.Album.Name,
+				}).Info("Remove duplicate")
+			}
+		}
+	}
+
+	_, err = client.RemoveTracksFromPlaylist(ctx, spotify.ID(playlistID), duplicates.ToSlice()...)
 	if err != nil {
 		log.WithError(err)
 		return
