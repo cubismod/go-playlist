@@ -16,3 +16,6 @@
 .env
 
 config.yaml
+go-playlist
+
+.vscode/launch.json

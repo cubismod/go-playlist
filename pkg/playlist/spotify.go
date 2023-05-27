@@ -14,7 +14,7 @@ func getItems(client *spotify.Client, config SpotifyConfig, playlistID string) [
 	var tracks []spotify.PlaylistItem
 	trackPage, err := client.GetPlaylistItems(ctx, spotify.ID(playlistID))
 	for {
-		if err != nil {
+		if err == nil {
 			tracks = append(tracks, trackPage.Items...)
 			err = client.NextPage(ctx, trackPage)
 		} else {
