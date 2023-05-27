@@ -7,7 +7,6 @@ import (
 	"github.com/apex/log"
 	"github.com/cubismod/go-playlist/pkg/playlist"
 	"github.com/go-co-op/gocron"
-	"github.com/joho/godotenv"
 	"github.com/urfave/cli/v2"
 	"github.com/zmb3/spotify/v2"
 )
@@ -38,14 +37,6 @@ func serve(spotifyConfig playlist.SpotifyConfig, client *spotify.Client) {
 }
 
 func main() {
-	err := godotenv.Load()
-
-	if err != nil {
-		log.WithError(err).Fatal("Failed to load env variables")
-	}
-
-	log.Info(os.Getenv("SPOTIFY_ID"))
-
 	// basic client setup
 	client := playlist.RunAuthServer()
 
