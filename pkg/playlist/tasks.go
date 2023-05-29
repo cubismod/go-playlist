@@ -76,16 +76,19 @@ func CleanupTask(playlistID string, config SpotifyConfig, client *spotify.Client
 		return
 	}
 
-	duplicates := mapset.NewSet[spotify.ID]()
+	duplicates := mapset.NewSet[*spotify.TrackToRemove]()
 
 	// find duplicates
-	for _, i1 := range items {
-		for _, i2 := range items {
-			if i1.Track.Track != nil && i2.Track.Track != nil &&
-				i1.Track.Track.SimpleTrack.ID != i2.Track.Track.ID &&
+	for i, i1 := range items {
+		for j, i2 := range items {
+			if i != j && i1.Track.Track != nil && i2.Track.Track != nil &&
 				i1.Track.Track.Name == i2.Track.Track.Name {
 
-				duplicates.Add(i2.Track.Track.ID)
+				trackToRemove := *&spotify.TrackToRemove{
+					URI: i2.Track.Track.Endpoint,
+					Positions: ,
+				}
+				duplicates.Add()
 				log.WithFields(log.Fields{
 					"name":   i1.Track.Track.Name,
 					"artist": i1.Track.Track.Artists,

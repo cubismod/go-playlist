@@ -77,6 +77,17 @@ func main() {
 					return nil
 				},
 			},
+			{
+				Name:  "batch",
+				Usage: "run all commands in a batch",
+				Action: func(cCtx *cli.Context) error {
+					for _, spotifyPlaylist := range spotifyConfig.Playlists {
+						playlist.ScanAndAdd(spotifyPlaylist.ID, spotifyConfig, client)
+					}
+					playlist.CleanupTask(spotifyConfig.Aggregator.ID, spotifyConfig, client)
+					return nil
+				},
+			},
 		},
 	}
 
