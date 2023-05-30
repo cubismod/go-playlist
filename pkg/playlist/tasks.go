@@ -3,7 +3,6 @@ package playlist
 import (
 	"context"
 	"math/rand"
-	"time"
 
 	"github.com/apex/log"
 	mapset "github.com/deckarep/golang-set/v2"
@@ -11,7 +10,7 @@ import (
 )
 
 func ScanAndAdd(playlistID string, config SpotifyConfig, client *spotify.Client) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), TimeoutTime)
 	defer cancel()
 
 	log.WithFields(log.Fields{
@@ -51,7 +50,7 @@ func ScanAndAdd(playlistID string, config SpotifyConfig, client *spotify.Client)
 
 // delete a few random items then find duplicates and remove
 func CleanupTask(playlistID string, config SpotifyConfig, client *spotify.Client) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), TimeoutTime)
 	defer cancel()
 
 	items := getItems(client, config, playlistID)

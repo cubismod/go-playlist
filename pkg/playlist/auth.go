@@ -39,7 +39,7 @@ func generateUrl() string {
 	return fmt.Sprintf("%s:%s/callback", host, port)
 }
 
-func RunAuthServer() *spotify.Client {
+func RunAuthServer() (*spotify.Client, error) {
 	// first start an HTTP server
 	http.HandleFunc("/callback", completeAuth)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {})
@@ -75,22 +75,22 @@ func RunAuthServer() *spotify.Client {
 	// use the client to make calls that require authorization
 	user, err := client.CurrentUser(context.Background())
 	if err != nil {
-		log.Fatalf("unable to login", err)
+		log.WithError(err).Error("Unable to login")
 	}
 	fmt.Println("You are logged in as:", user.ID)
 
-	return client
+	return client, err
 }
 
 func completeAuth(w http.ResponseWriter, r *http.Request) {
 	tok, err := auth.Token(r.Context(), state, r)
 	if err != nil {
 		http.Error(w, "Couldn't get token", http.StatusForbidden)
-		log.Fatal(err.Error())
+		log.Error(err.Error())
 	}
 	if st := r.FormValue("state"); st != state {
 		http.NotFound(w, r)
-		log.Fatalf("State mismatch: %s != %s\n", st, state)
+		log.Errorf("State mismatch: %s != %s\n", st, state)
 	}
 
 	// use the token to get an authenticated client

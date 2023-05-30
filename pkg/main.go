@@ -38,7 +38,11 @@ func serve(spotifyConfig playlist.SpotifyConfig, client *spotify.Client) {
 
 func main() {
 	// basic client setup
-	client := playlist.RunAuthServer()
+	client, err := playlist.RunAuthServer()
+
+	if err != nil {
+		log.WithError(err).Fatal("unable to login to spotify")
+	}
 
 	log.Info("Spotify connected")
 
