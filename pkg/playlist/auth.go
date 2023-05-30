@@ -58,6 +58,8 @@ func RunAuthServer() (*spotify.Client, error) {
 	req.Header.Set("Actions", fmt.Sprintf("view, Open, %s", url))
 	resp, err := http.DefaultClient.Do(req)
 
+	defer req.Body.Close()
+
 	if err != nil {
 		log.WithError(err).Error("Unable to post to Gotify server")
 	}
@@ -95,6 +97,6 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 
 	// use the token to get an authenticated client
 	client := spotify.New(auth.Client(r.Context(), tok))
-	fmt.Fprintf(w, "Login Completed!")
+	http.ServeFile(w, r, "./resources/login.html")
 	ch <- client
 }
