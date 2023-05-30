@@ -7,8 +7,10 @@ import (
 	"github.com/zmb3/spotify/v2"
 )
 
+const TimeoutTime = 20 * time.Minute
+
 func getItems(client *spotify.Client, config SpotifyConfig, playlistID string) []spotify.PlaylistItem {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), TimeoutTime)
 	defer cancel()
 
 	var tracks []spotify.PlaylistItem
