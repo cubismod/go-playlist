@@ -48,6 +48,20 @@ func ScanAndAdd(playlistID string, config SpotifyConfig, client *spotify.Client)
 	}
 }
 
+// removes duplicate songs from spotify then re adds them back
+// the reason is because you can't delete individual tracks via positions in the web api seemingly
+// https://developer.spotify.com/documentation/web-api/reference/remove-tracks-playlist
+func removeAndAdd(ctx context.Context, playlistID string, idsToRemove []spotify.ID, client *spotify.Client) {
+	_, err := client.RemoveTracksFromPlaylist(ctx, spotify.ID(playlistID), idsToRemove...)
+	if err != nil {
+		log.WithError(err).Error("Error removing tracks!")
+	}
+	_, err = client.AddTracksToPlaylist(ctx, spotify.ID(playlistID), idsToRemove...)
+	if err != nil {
+		log.WithError(err).Error("Error adding track back!")
+	}
+}
+
 // delete a few random items then find duplicates and remove
 func CleanupTask(playlistID string, config SpotifyConfig, client *spotify.Client) {
 	ctx, cancel := context.WithTimeout(context.Background(), TimeoutTime)
@@ -56,7 +70,7 @@ func CleanupTask(playlistID string, config SpotifyConfig, client *spotify.Client
 	items := getItems(client, config, playlistID)
 	var deleteItems []spotify.ID
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 25; i++ {
 		randIndex := rand.Intn(len(items))
 		randomItem := items[randIndex]
 		if randomItem.Track.Track != nil {
@@ -71,35 +85,42 @@ func CleanupTask(playlistID string, config SpotifyConfig, client *spotify.Client
 
 	_, err := client.RemoveTracksFromPlaylist(ctx, spotify.ID(playlistID), deleteItems...)
 	if err != nil {
-		log.WithError(err)
+		log.WithError(err).Error("Error removing tracks!")
 		return
 	}
 
-	duplicates := mapset.NewSet[*spotify.TrackToRemove]()
+	duplicates := mapset.NewSet[string]()
 
 	// find duplicates
 	for i, i1 := range items {
 		for j, i2 := range items {
 			if i != j && i1.Track.Track != nil && i2.Track.Track != nil &&
 				i1.Track.Track.Name == i2.Track.Track.Name {
+				duplicates.Add(i1.Track.Track.ID.String())
 
-				trackToRemove := *&spotify.TrackToRemove{
-					URI: i2.Track.Track.Endpoint,
-					Positions: ,
-				}
-				duplicates.Add()
 				log.WithFields(log.Fields{
 					"name":   i1.Track.Track.Name,
 					"artist": i1.Track.Track.Artists,
 					"album":  i1.Track.Track.Album.Name,
+					"pos_1":  i,
+					"pos_2":  j,
 				}).Info("Remove duplicate")
 			}
 		}
 	}
 
-	_, err = client.RemoveTracksFromPlaylist(ctx, spotify.ID(playlistID), duplicates.ToSlice()...)
-	if err != nil {
-		log.WithError(err)
-		return
+	var idsToRemove []spotify.ID
+
+	for k, d := range duplicates.ToSlice() {
+		idsToRemove = append(idsToRemove, spotify.ID(d))
+
+		if k != 0 && k%70 == 0 {
+			removeAndAdd(ctx, playlistID, idsToRemove, client)
+			idsToRemove = nil
+		}
+	}
+
+	if idsToRemove != nil {
+		removeAndAdd(ctx, playlistID, idsToRemove, client)
 	}
 }
