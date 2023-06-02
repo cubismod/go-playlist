@@ -53,7 +53,7 @@ func RunAuthServer() (*spotify.Client, error) {
 	url := auth.AuthURL(state)
 	msg := fmt.Sprintf("Please log in to Spotify by visiting the following page in your browser: %s", url)
 
-	req, _ := http.NewRequest("POST", os.Getenv("NTFY_URL"), strings.NewReader(msg))
+	req, _ := http.NewRequest("POST", os.Getenv("NTFY_URL"), strings.NewReader("Spotify login requested for go-playlist"))
 	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", os.Getenv("NTFY_PW")))
 	req.Header.Set("Actions", fmt.Sprintf("view, Open, %s", url))
 	resp, err := http.DefaultClient.Do(req)
@@ -61,13 +61,13 @@ func RunAuthServer() (*spotify.Client, error) {
 	defer req.Body.Close()
 
 	if err != nil {
-		log.WithError(err).Error("Unable to post to Gotify server")
+		log.WithError(err).Error("Unable to post to ntfy server")
 	}
 
 	log.WithFields(log.Fields{
 		"code": resp.StatusCode,
 		"body": resp.Status,
-	}).Info("Gotify req")
+	}).Info("ntfy req")
 
 	log.Info(msg)
 
