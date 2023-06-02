@@ -9,8 +9,8 @@ import (
 	"github.com/zmb3/spotify/v2"
 )
 
-func ScanAndAdd(playlistID string, config SpotifyConfig, client *spotify.Client) {
-	ctx, cancel := context.WithTimeout(context.Background(), TimeoutTime)
+func ScanAndAdd(ctx context.Context, playlistID string, config SpotifyConfig, client *spotify.Client) {
+	ctx, cancel := context.WithTimeout(ctx, TimeoutTime)
 	defer cancel()
 
 	log.WithFields(log.Fields{
@@ -18,7 +18,7 @@ func ScanAndAdd(playlistID string, config SpotifyConfig, client *spotify.Client)
 		"playlist": playlistID,
 	}).Info("Scan and add")
 
-	items := getItems(client, config, playlistID)
+	items := getItems(ctx, client, config, playlistID)
 	var trackIDs []spotify.ID
 
 	// now add to aggregator playlist
@@ -63,11 +63,11 @@ func removeAndAdd(ctx context.Context, playlistID string, idsToRemove []spotify.
 }
 
 // delete a few random items then find duplicates and remove
-func CleanupTask(playlistID string, config SpotifyConfig, client *spotify.Client) {
-	ctx, cancel := context.WithTimeout(context.Background(), TimeoutTime)
+func CleanupTask(ctx context.Context, playlistID string, config SpotifyConfig, client *spotify.Client) {
+	ctx, cancel := context.WithTimeout(ctx, TimeoutTime)
 	defer cancel()
 
-	items := getItems(client, config, playlistID)
+	items := getItems(ctx, client, config, playlistID)
 	var deleteItems []spotify.ID
 
 	for i := 0; i < 25; i++ {

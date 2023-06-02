@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/zmb3/spotify/v2"
 )
 
-func serve(spotifyConfig playlist.SpotifyConfig, client *spotify.Client) {
+func serve(ctx context.Context, spotifyConfig playlist.SpotifyConfig, client *spotify.Client) {
 	// now we setup the cron loop
 	scheduler := gocron.NewScheduler(time.Local)
 
@@ -29,7 +30,7 @@ func serve(spotifyConfig playlist.SpotifyConfig, client *spotify.Client) {
 		}
 	}
 
-	_, err := scheduler.Cron(spotifyConfig.Aggregator.CleanupCron).Do(playlist.CleanupTask, spotifyConfig.Aggregator.ID, spotifyConfig, client)
+	_, err := scheduler.Cron(spotifyConfig.Aggregator.CleanupCron).Do(playlist.CleanupTask, ctx, spotifyConfig.Aggregator.ID, spotifyConfig, client)
 	if err != nil {
 		log.WithError(err).Fatal("Could not schedule cleanup job")
 	}
@@ -39,6 +40,8 @@ func serve(spotifyConfig playlist.SpotifyConfig, client *spotify.Client) {
 func main() {
 	// basic client setup
 	client, err := playlist.RunAuthServer()
+
+	ctx := context.Background()
 
 	if err != nil {
 		log.WithError(err).Fatal("unable to login to spotify")
@@ -56,7 +59,7 @@ func main() {
 				Name:  "serve",
 				Usage: "run a persistent cron server",
 				Action: func(cCtx *cli.Context) error {
-					serve(spotifyConfig, client)
+					serve(ctx, spotifyConfig, client)
 					return nil
 				},
 			},
@@ -69,7 +72,7 @@ func main() {
 					}
 
 					playlistID := cCtx.Args().Get(0)
-					playlist.ScanAndAdd(playlistID, spotifyConfig, client)
+					playlist.ScanAndAdd(ctx, playlistID, spotifyConfig, client)
 					return nil
 				},
 			},
@@ -77,7 +80,7 @@ func main() {
 				Name:  "clean",
 				Usage: "clean the aggregator playlist",
 				Action: func(cCtx *cli.Context) error {
-					playlist.CleanupTask(spotifyConfig.Aggregator.ID, spotifyConfig, client)
+					playlist.CleanupTask(ctx, spotifyConfig.Aggregator.ID, spotifyConfig, client)
 					return nil
 				},
 			},
