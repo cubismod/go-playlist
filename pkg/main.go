@@ -15,6 +15,7 @@ import (
 func serve(ctx context.Context, spotifyConfig playlist.SpotifyConfig, client *spotify.Client) {
 	// now we setup the cron loop
 	scheduler := gocron.NewScheduler(time.Local)
+	scheduler.SingletonModeAll()
 
 	for _, configPlaylist := range spotifyConfig.Playlists {
 		_, err := scheduler.Cron(configPlaylist.ScanCron).Do(playlist.ScanAndAdd, configPlaylist.ID, spotifyConfig, client)
@@ -89,9 +90,9 @@ func main() {
 				Usage: "run all commands in a batch",
 				Action: func(cCtx *cli.Context) error {
 					for _, spotifyPlaylist := range spotifyConfig.Playlists {
-						playlist.ScanAndAdd(spotifyPlaylist.ID, spotifyConfig, client)
+						playlist.ScanAndAdd(ctx, spotifyPlaylist.ID, spotifyConfig, client)
 					}
-					playlist.CleanupTask(spotifyConfig.Aggregator.ID, spotifyConfig, client)
+					playlist.CleanupTask(ctx, spotifyConfig.Aggregator.ID, spotifyConfig, client)
 					return nil
 				},
 			},
