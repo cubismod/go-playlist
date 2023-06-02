@@ -18,7 +18,7 @@ func serve(ctx context.Context, spotifyConfig playlist.SpotifyConfig, client *sp
 	scheduler.SingletonModeAll()
 
 	for _, configPlaylist := range spotifyConfig.Playlists {
-		_, err := scheduler.Cron(configPlaylist.ScanCron).Do(playlist.ScanAndAdd, configPlaylist.ID, spotifyConfig, client)
+		_, err := scheduler.Cron(configPlaylist.ScanCron).Do(playlist.ScanAndAdd, ctx, configPlaylist.ID, spotifyConfig, client)
 		if err != nil {
 			log.WithError(err).Error("Could not schedule job")
 		} else {
