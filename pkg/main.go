@@ -13,6 +13,9 @@ import (
 )
 
 func serve(ctx context.Context, spotifyConfig playlist.SpotifyConfig, client *spotify.Client) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	// now we setup the cron loop
 	scheduler := gocron.NewScheduler(time.Local)
 	scheduler.SingletonModeAll()
