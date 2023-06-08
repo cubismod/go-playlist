@@ -3,6 +3,7 @@ package playlist
 import (
 	"context"
 	"math/rand"
+	"time"
 
 	"github.com/apex/log"
 	mapset "github.com/deckarep/golang-set/v2"
@@ -24,6 +25,9 @@ func ScanAndAdd(ctx context.Context, playlistID string, config SpotifyConfig, cl
 	// now add to aggregator playlist
 	for i, item := range items {
 		if i%70 == 0 && len(trackIDs) != 0 {
+			ctx, cancel := context.WithTimeout(ctx, time.Second*30)
+			defer cancel()
+
 			_, err := client.AddTracksToPlaylist(ctx, spotify.ID(config.Aggregator.ID), trackIDs...)
 			trackIDs = nil
 
@@ -41,6 +45,7 @@ func ScanAndAdd(ctx context.Context, playlistID string, config SpotifyConfig, cl
 			}).Info("Adding to aggregator")
 		}
 	}
+
 	_, err := client.AddTracksToPlaylist(ctx, spotify.ID(config.Aggregator.ID), trackIDs...)
 
 	if err != nil {
@@ -52,6 +57,9 @@ func ScanAndAdd(ctx context.Context, playlistID string, config SpotifyConfig, cl
 // the reason is because you can't delete individual tracks via positions in the web api seemingly
 // https://developer.spotify.com/documentation/web-api/reference/remove-tracks-playlist
 func removeAndAdd(ctx context.Context, playlistID string, idsToRemove []spotify.ID, client *spotify.Client) {
+	ctx, cancel := context.WithTimeout(ctx, TimeoutTime)
+	defer cancel()
+
 	_, err := client.RemoveTracksFromPlaylist(ctx, spotify.ID(playlistID), idsToRemove...)
 	if err != nil {
 		log.WithError(err).Error("Error removing tracks!")
@@ -70,16 +78,18 @@ func CleanupTask(ctx context.Context, playlistID string, config SpotifyConfig, c
 	items := getItems(ctx, client, config, playlistID)
 	var deleteItems []spotify.ID
 
-	for i := 0; i < 25; i++ {
-		randIndex := rand.Intn(len(items))
-		randomItem := items[randIndex]
-		if randomItem.Track.Track != nil {
-			deleteItems = append(deleteItems, randomItem.Track.Track.ID)
-			log.WithFields(log.Fields{
-				"name":   randomItem.Track.Track.Name,
-				"artist": randomItem.Track.Track.Artists,
-				"album":  randomItem.Track.Track.Album.Name,
-			}).Info("Remove from playlist")
+	if len(items) > 0 {
+		for i := 0; i < 25; i++ {
+			randIndex := rand.Intn(len(items))
+			randomItem := items[randIndex]
+			if randomItem.Track.Track != nil {
+				deleteItems = append(deleteItems, randomItem.Track.Track.ID)
+				log.WithFields(log.Fields{
+					"name":   randomItem.Track.Track.Name,
+					"artist": randomItem.Track.Track.Artists,
+					"album":  randomItem.Track.Track.Album.Name,
+				}).Info("Remove from playlist")
+			}
 		}
 	}
 
