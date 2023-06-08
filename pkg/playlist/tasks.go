@@ -11,7 +11,7 @@ import (
 )
 
 func ScanAndAdd(ctx context.Context, playlistID string, config SpotifyConfig, client *spotify.Client) {
-	ctx, cancel := context.WithTimeout(ctx, TimeoutTime)
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	log.WithFields(log.Fields{
