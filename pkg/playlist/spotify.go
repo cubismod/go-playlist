@@ -4,10 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/apex/log"
 	"github.com/zmb3/spotify/v2"
 )
 
-const TimeoutTime = 1 * time.Hour
+const TimeoutTime = 30 * time.Second
 
 func getItems(ctx context.Context, client *spotify.Client, config SpotifyConfig, playlistID string) []spotify.PlaylistItem {
 	ctx, cancel := context.WithTimeout(ctx, TimeoutTime)
@@ -24,4 +25,24 @@ func getItems(ctx context.Context, client *spotify.Client, config SpotifyConfig,
 		}
 	}
 	return tracks
+}
+
+func addToPlaylist(ctx context.Context, client *spotify.Client, playlistID string, ids []spotify.ID) {
+	ctx, cancel := context.WithTimeout(ctx, TimeoutTime)
+	defer cancel()
+
+	_, err := client.AddTracksToPlaylist(ctx, spotify.ID(playlistID), ids...)
+
+	if err != nil {
+		log.WithError(err).Error("Unable to add tracks to aggregator playlist")
+	}
+}
+
+func removeFromPlaylist(ctx context.Context, client *spotify.Client, playlistID string, ids []spotify.ID) error {
+	ctx, cancel := context.WithTimeout(ctx, TimeoutTime)
+	defer cancel()
+
+	_, err := client.RemoveTracksFromPlaylist(ctx, spotify.ID(playlistID), ids...)
+
+	return err
 }

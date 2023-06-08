@@ -3,7 +3,6 @@ package playlist
 import (
 	"context"
 	"math/rand"
-	"time"
 
 	"github.com/apex/log"
 	mapset "github.com/deckarep/golang-set/v2"
@@ -25,16 +24,8 @@ func ScanAndAdd(ctx context.Context, playlistID string, config SpotifyConfig, cl
 	// now add to aggregator playlist
 	for i, item := range items {
 		if i%70 == 0 && len(trackIDs) != 0 {
-			ctx, cancel := context.WithTimeout(ctx, time.Second*30)
-			defer cancel()
-
-			_, err := client.AddTracksToPlaylist(ctx, spotify.ID(config.Aggregator.ID), trackIDs...)
+			addToPlaylist(ctx, client, config.Aggregator.ID, trackIDs)
 			trackIDs = nil
-
-			if err != nil {
-				log.WithError(err).Error("Unable to add tracks to playlist")
-			}
-			return
 		} else {
 			trackIDs = append(trackIDs, item.Track.Track.ID)
 			log.WithFields(log.Fields{
@@ -46,11 +37,7 @@ func ScanAndAdd(ctx context.Context, playlistID string, config SpotifyConfig, cl
 		}
 	}
 
-	_, err := client.AddTracksToPlaylist(ctx, spotify.ID(config.Aggregator.ID), trackIDs...)
-
-	if err != nil {
-		log.WithError(err).Error("Unable to add tracks to playlist")
-	}
+	addToPlaylist(ctx, client, config.Aggregator.ID, trackIDs)
 }
 
 // removes duplicate songs from spotify then re adds them back
@@ -72,7 +59,7 @@ func removeAndAdd(ctx context.Context, playlistID string, idsToRemove []spotify.
 
 // delete a few random items then find duplicates and remove
 func CleanupTask(ctx context.Context, playlistID string, config SpotifyConfig, client *spotify.Client) {
-	ctx, cancel := context.WithTimeout(ctx, TimeoutTime)
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	items := getItems(ctx, client, config, playlistID)
@@ -93,7 +80,7 @@ func CleanupTask(ctx context.Context, playlistID string, config SpotifyConfig, c
 		}
 	}
 
-	_, err := client.RemoveTracksFromPlaylist(ctx, spotify.ID(playlistID), deleteItems...)
+	err := removeFromPlaylist(ctx, client, playlistID, deleteItems)
 	if err != nil {
 		log.WithError(err).Error("Error removing tracks!")
 		return
