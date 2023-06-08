@@ -9,6 +9,16 @@ import (
 	"github.com/zmb3/spotify/v2"
 )
 
+func isDuplicate(item spotify.PlaylistItem, playlistContents []spotify.PlaylistItem) bool {
+	for _, pi := range playlistContents {
+		if item.Track.Track != nil && pi.Track.Track != nil &&
+			item.Track.Track.Name == pi.Track.Track.Name {
+			return true
+		}
+	}
+	return false
+}
+
 func ScanAndAdd(ctx context.Context, playlistID string, config SpotifyConfig, client *spotify.Client) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -18,26 +28,36 @@ func ScanAndAdd(ctx context.Context, playlistID string, config SpotifyConfig, cl
 		"playlist": playlistID,
 	}).Info("Scan and add")
 
-	items := getItems(ctx, client, config, playlistID)
+	addPlaylistItems := getItems(ctx, client, config, playlistID)
+	aggregatorItems := getItems(ctx, client, config, config.Aggregator.ID)
 	var trackIDs []spotify.ID
 
 	// now add to aggregator playlist
-	for i, item := range items {
-		if i%70 == 0 && len(trackIDs) != 0 {
+	for _, item := range addPlaylistItems {
+		if len(trackIDs) >= 90 {
 			addToPlaylist(ctx, client, config.Aggregator.ID, trackIDs)
 			trackIDs = nil
 		} else {
-			trackIDs = append(trackIDs, item.Track.Track.ID)
-			log.WithFields(log.Fields{
-				"playlistID": playlistID,
-				"trackName":  item.Track.Track.Name,
-				"artists":    item.Track.Track.Artists,
-				"album":      item.Track.Track.Album.Name,
-			}).Info("Adding to aggregator")
+			if !isDuplicate(item, aggregatorItems) {
+				trackIDs = append(trackIDs, item.Track.Track.ID)
+				log.WithFields(log.Fields{
+					"playlistID": playlistID,
+					"trackName":  item.Track.Track.Name,
+					"artists":    item.Track.Track.Artists,
+					"album":      item.Track.Track.Album.Name,
+				}).Info("Adding to aggregator")
+			}
 		}
 	}
 
-	addToPlaylist(ctx, client, config.Aggregator.ID, trackIDs)
+	if len(trackIDs) != 0 {
+		addToPlaylist(ctx, client, config.Aggregator.ID, trackIDs)
+	}
+
+	log.WithFields(log.Fields{
+		"action":   "finished",
+		"playlist": playlistID,
+	}).Info("Scan and add")
 }
 
 // removes duplicate songs from spotify then re adds them back
@@ -57,7 +77,7 @@ func removeAndAdd(ctx context.Context, playlistID string, idsToRemove []spotify.
 	}
 }
 
-// delete a few random items then find duplicates and remove
+// keep the aggregator playlist under 2500 tracks and remove duplicate songs
 func CleanupTask(ctx context.Context, playlistID string, config SpotifyConfig, client *spotify.Client) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -65,25 +85,30 @@ func CleanupTask(ctx context.Context, playlistID string, config SpotifyConfig, c
 	items := getItems(ctx, client, config, playlistID)
 	var deleteItems []spotify.ID
 
-	if len(items) > 0 {
-		for i := 0; i < 25; i++ {
-			randIndex := rand.Intn(len(items))
-			randomItem := items[randIndex]
-			if randomItem.Track.Track != nil {
-				deleteItems = append(deleteItems, randomItem.Track.Track.ID)
-				log.WithFields(log.Fields{
-					"name":   randomItem.Track.Track.Name,
-					"artist": randomItem.Track.Track.Artists,
-					"album":  randomItem.Track.Track.Album.Name,
-				}).Info("Remove from playlist")
+	toDelete := len(items) - 2500
+
+	if toDelete > 0 {
+		for i := 0; i < toDelete; i++ {
+			if len(deleteItems) >= 90 {
+				err := removeFromPlaylist(ctx, client, playlistID, deleteItems)
+				if err != nil {
+					log.WithError(err).Error("Error removing tracks!")
+					return
+				}
+				deleteItems = nil
+			} else {
+				randIndex := rand.Intn(len(items))
+				randomItem := items[randIndex]
+				if randomItem.Track.Track != nil {
+					deleteItems = append(deleteItems, randomItem.Track.Track.ID)
+					log.WithFields(log.Fields{
+						"name":   randomItem.Track.Track.Name,
+						"artist": randomItem.Track.Track.Artists,
+						"album":  randomItem.Track.Track.Album.Name,
+					}).Info("Remove from playlist")
+				}
 			}
 		}
-	}
-
-	err := removeFromPlaylist(ctx, client, playlistID, deleteItems)
-	if err != nil {
-		log.WithError(err).Error("Error removing tracks!")
-		return
 	}
 
 	duplicates := mapset.NewSet[string]()
