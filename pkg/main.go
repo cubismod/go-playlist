@@ -34,7 +34,7 @@ func serve(ctx context.Context, spotifyConfig playlist.SpotifyConfig, client *sp
 		}
 	}
 
-	_, err := scheduler.Cron(spotifyConfig.Aggregator.CleanupCron).Do(playlist.CleanupTask, ctx, spotifyConfig.Aggregator.ID, spotifyConfig, client)
+	_, err := scheduler.Cron(spotifyConfig.Aggregator.CleanupCron).StartImmediately().Do(playlist.CleanupTask, ctx, spotifyConfig.Aggregator.ID, spotifyConfig, client)
 	if err != nil {
 		log.WithError(err).Fatal("Could not schedule cleanup job")
 	}
