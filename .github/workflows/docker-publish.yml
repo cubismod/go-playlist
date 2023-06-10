@@ -23,3 +23,5 @@ jobs:
           image: go-playlist
           tag_with_latest: true
           tag: ${{ github.sha }}
+          cache: true
+          cache_registry: cache
