@@ -9,14 +9,24 @@ import (
 	"github.com/zmb3/spotify/v2"
 )
 
-func isDuplicate(item spotify.PlaylistItem, playlistContents []spotify.PlaylistItem) bool {
-	for _, pi := range playlistContents {
-		if item.Track.Track != nil && pi.Track.Track != nil &&
-			item.Track.Track.Name == pi.Track.Track.Name {
-			return true
+// func isDuplicate(item spotify.PlaylistItem, playlistContents []spotify.PlaylistItem) bool {
+// 	for _, pi := range playlistContents {
+// 		if item.Track.Track != nil && pi.Track.Track != nil &&
+// 			item.Track.Track.Name == pi.Track.Track.Name {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
+
+func titlesToSet(playlistItems []spotify.PlaylistItem) mapset.Set[string] {
+	set := mapset.NewSet[string]()
+	for _, item := range playlistItems {
+		if item.Track.Track != nil {
+			set.Add(item.Track.Track.Name)
 		}
 	}
-	return false
+	return set
 }
 
 func ScanAndAdd(ctx context.Context, playlistID string, config SpotifyConfig, client *spotify.Client) {
@@ -32,13 +42,16 @@ func ScanAndAdd(ctx context.Context, playlistID string, config SpotifyConfig, cl
 	aggregatorItems := getItems(ctx, client, config, config.Aggregator.ID)
 	var trackIDs []spotify.ID
 
+	aggregatorTitleSet := titlesToSet(aggregatorItems)
+
 	// now add to aggregator playlist
 	for _, item := range addPlaylistItems {
 		if len(trackIDs) >= 90 {
 			addToPlaylist(ctx, client, config.Aggregator.ID, trackIDs)
 			trackIDs = nil
 		} else {
-			if !isDuplicate(item, aggregatorItems) {
+			title := []string{item.Track.Track.Name}
+			if !aggregatorTitleSet.Contains(title...) {
 				trackIDs = append(trackIDs, item.Track.Track.ID)
 				log.WithFields(log.Fields{
 					"playlistID": playlistID,
