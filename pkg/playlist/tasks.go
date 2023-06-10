@@ -82,6 +82,11 @@ func CleanupTask(ctx context.Context, playlistID string, config SpotifyConfig, c
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	log.WithFields(log.Fields{
+		"action":   "begin",
+		"playlist": playlistID,
+	}).Info("Cleanup")
+
 	items := getItems(ctx, client, config, playlistID)
 	var deleteItems []spotify.ID
 
@@ -145,4 +150,9 @@ func CleanupTask(ctx context.Context, playlistID string, config SpotifyConfig, c
 	if idsToRemove != nil {
 		removeAndAdd(ctx, playlistID, idsToRemove, client)
 	}
+
+	log.WithFields(log.Fields{
+		"action":   "finished",
+		"playlist": playlistID,
+	}).Info("Cleanup")
 }
