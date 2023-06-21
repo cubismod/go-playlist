@@ -10,12 +10,12 @@ import (
 
 const TimeoutTime = 30 * time.Second
 
-func getItems(ctx context.Context, client *spotify.Client, config SpotifyConfig, playlistID string) []spotify.PlaylistItem {
+func getItems(ctx context.Context, client *spotify.Client, config SpotifyConfig, playlistId string) []spotify.PlaylistItem {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
 	var tracks []spotify.PlaylistItem
-	trackPage, err := client.GetPlaylistItems(ctx, spotify.ID(playlistID))
+	trackPage, err := client.GetPlaylistItems(ctx, spotify.ID(playlistId))
 	for {
 		if err == nil {
 			tracks = append(tracks, trackPage.Items...)
@@ -24,6 +24,10 @@ func getItems(ctx context.Context, client *spotify.Client, config SpotifyConfig,
 			break
 		}
 	}
+	log.WithFields(log.Fields{
+		"playlistId": playlistId,
+		"tracks":     len(tracks),
+	}).Info("Loaded songs from playlist")
 	return tracks
 }
 
