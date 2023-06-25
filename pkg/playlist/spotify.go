@@ -20,8 +20,13 @@ func getItems(ctx context.Context, client *spotify.Client, config SpotifyConfig,
 		if err == nil {
 			tracks = append(tracks, trackPage.Items...)
 			err = client.NextPage(ctx, trackPage)
-		} else {
+		}
+		if err == spotify.ErrNoMorePages {
 			break
+		}
+		if err != nil {
+			log.WithError(err).Error("Error fetching playlist items")
+			return tracks
 		}
 	}
 	log.WithFields(log.Fields{
