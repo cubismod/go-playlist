@@ -29,8 +29,8 @@ func titlesToSet(playlistItems []spotify.PlaylistItem) mapset.Set[string] {
 	return set
 }
 
-func ScanAndAdd(ctx context.Context, playlistID string, config SpotifyConfig, client *spotify.Client) {
-	ctx, cancel := context.WithCancel(ctx)
+func ScanAndAdd(playlistID string, config SpotifyConfig, client *spotify.Client) {
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	log.WithFields(log.Fields{
@@ -91,8 +91,8 @@ func removeAndAdd(ctx context.Context, playlistID string, idsToRemove []spotify.
 }
 
 // keep the aggregator playlist under 2500 tracks and remove duplicate songs
-func CleanupTask(ctx context.Context, playlistID string, config SpotifyConfig, client *spotify.Client) {
-	ctx, cancel := context.WithCancel(ctx)
+func CleanupTask(playlistID string, config SpotifyConfig, client *spotify.Client) {
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	log.WithFields(log.Fields{

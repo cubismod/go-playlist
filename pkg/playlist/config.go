@@ -24,7 +24,7 @@ type SpotifyConfig struct {
 	Playlists  []PlaylistConfig `yaml:"playlists"`
 }
 
-func Load() SpotifyConfig {
+func LoadConfig() SpotifyConfig {
 	cfile, err := ioutil.ReadFile("config.yaml")
 
 	if err != nil {
