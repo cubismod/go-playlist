@@ -73,8 +73,8 @@ Cron syntax is used to schedule when actions happen.
 SPOTIFY_ID=<id>
 SPOTIFY_SECRET=<secret>
  # used for local webserver to get auth details
-HOSTNAME=http://localhost
-PORT=8080
+GO_PLAY_HOSTNAME=http://localhost
+GO_PLAY_PORT=8080
 # used to send a notification to your phone when login is requested
 NTFY_URL=https://ntfy.com/my_topic_here
 NTFY_PW=<secure_password>
