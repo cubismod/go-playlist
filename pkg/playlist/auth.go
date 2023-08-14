@@ -44,7 +44,7 @@ func RunAuthServer() (*spotify.Client, error) {
 	http.HandleFunc("/callback", completeAuth)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {})
 	go func() {
-		err := http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("PORT")), nil)
+		err := http.ListenAndServe(fmt.Sprintf("%s:%s", os.Getenv("GO_PLAY_LISTEN_ADDR"), os.Getenv("GO_PLAY_PORT")), nil)
 		if err != nil {
 			log.Fatalf("Unable to start web server", err)
 		}

@@ -74,6 +74,8 @@ SPOTIFY_ID=<id>
 SPOTIFY_SECRET=<secret>
  # used for local webserver to get auth details
 GO_PLAY_HOSTNAME=http://localhost
+GO_PLAY_LISTEN_ADDR=0.0.0.0
+# or 127.0.0.1 for localhost
 GO_PLAY_PORT=8080
 # used to send a notification to your phone when login is requested
 NTFY_URL=https://ntfy.com/my_topic_here
