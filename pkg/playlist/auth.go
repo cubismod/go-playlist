@@ -28,12 +28,12 @@ func generateUrl() string {
 	host := "http://localhost"
 	port := "8080"
 
-	if os.Getenv("GO_PLAYLIST_HOSTNAME") != "" {
-		host = os.Getenv("GO_PLAYLIST_HOSTNAME")
+	if os.Getenv("GO_PLAY_HOSTNAME") != "" {
+		host = os.Getenv("GO_PLAY_HOSTNAME")
 	}
 
-	if os.Getenv("GO_PLAYLIST_PORT") != "" {
-		port = os.Getenv("GO_PLAYLIST_PORT")
+	if os.Getenv("GO_PLAY_PORT") != "" {
+		port = os.Getenv("GO_PLAY_PORT")
 	}
 
 	return fmt.Sprintf("%s:%s/callback", host, port)
