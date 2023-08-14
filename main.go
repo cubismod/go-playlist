@@ -88,8 +88,8 @@ func main() {
 				Action: func(cCtx *cli.Context) error {
 					for _, spotifyPlaylist := range spotifyConfig.Playlists {
 						playlist.ScanAndAdd(spotifyPlaylist.ID, spotifyConfig, client)
+						playlist.CleanupTask(spotifyConfig.Aggregator.ID, spotifyConfig, client)
 					}
-					playlist.CleanupTask(spotifyConfig.Aggregator.ID, spotifyConfig, client)
 					return nil
 				},
 			},

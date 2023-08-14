@@ -7,6 +7,6 @@ LABEL maintainer="ryan@hexa.mozmail.com"
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /app/go-playlist /app/pkg/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/go-playlist
 
 ENTRYPOINT [ "/app/go-playlist", "serve" ]
