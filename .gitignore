@@ -19,3 +19,5 @@ config.yaml
 go-playlist
 
 .vscode/launch.json
+
+__debug_bin
