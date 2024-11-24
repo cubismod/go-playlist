@@ -169,3 +169,8 @@ func CleanupTask(playlistID string, config SpotifyConfig, client *spotify.Client
 		"playlist": playlistID,
 	}).Info("Cleanup")
 }
+
+func CreateMixes(config SpotifyConfig, client *spotify.Client) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+}

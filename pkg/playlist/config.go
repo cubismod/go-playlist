@@ -22,6 +22,7 @@ type AggregatorConfig struct {
 type SpotifyConfig struct {
 	Aggregator AggregatorConfig `yaml:"aggregator"`
 	Playlists  []PlaylistConfig `yaml:"playlists"`
+	Mixes      []PlaylistConfig `yaml:"mixes"`
 }
 
 func LoadConfig() SpotifyConfig {

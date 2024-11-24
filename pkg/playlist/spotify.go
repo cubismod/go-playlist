@@ -55,3 +55,30 @@ func removeFromPlaylist(ctx context.Context, client *spotify.Client, playlistID 
 
 	return err
 }
+
+func clearPlaylist(ctx context.Context, playlistID string, config SpotifyConfig, client *spotify.Client) error {
+	ctx, cancel := context.WithTimeout(ctx, TimeoutTime)
+	defer cancel()
+
+	log.WithFields(log.Fields{
+		"action":   "clear playlist",
+		"playlist": playlistID,
+	}).Info("Clearing")
+
+	playlistItems := getItems(ctx, client, config, playlistID)
+	trackIDs := getPlaylistIDs(playlistItems)
+
+	err := removeFromPlaylist(ctx, client, playlistID, trackIDs)
+
+	return err
+
+}
+
+// retrieves the playlist IDs from []spotify.PlaylistItem
+func getPlaylistIDs(items []spotify.PlaylistItem) []spotify.ID {
+	var ids []spotify.ID
+	for _, item := range items {
+		ids = append(ids, item.Track.Track.ID)
+	}
+	return ids
+}
