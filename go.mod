@@ -5,8 +5,8 @@ go 1.19
 require (
 	github.com/apex/log v1.9.0
 	github.com/go-co-op/gocron v1.37.0
-	github.com/google/uuid v1.4.0
 	github.com/deckarep/golang-set/v2 v2.6.0
+	github.com/google/uuid v1.6.0
 	github.com/urfave/cli/v2 v2.27.5
 	github.com/zmb3/spotify/v2 v2.4.3
 	gopkg.in/yaml.v3 v3.0.1
