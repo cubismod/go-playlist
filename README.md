@@ -1,3 +1,9 @@
+## December 2nd, 2024
+
+Due to [Spotify's recent API changes](https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api), this project is now archived.
+🖕Spotify, as per usual you ruin everything 🖕
+
+
 # go-playlist
 Spotify playlist automation with go
 
